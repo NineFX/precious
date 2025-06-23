@@ -62,6 +62,7 @@ pub fn in_extended_arabic_indic(codepoint: Int) -> Bool {
 @external(erlang, "unicode", "characters_to_nfkc_binary")
 @external(javascript, "../precious_ffi.mjs", "nkfcnfkc")
 pub fn nfkc(s: String) -> String
+
 pub fn in_left_to_right_first(codepoint: Int) -> Bool {
   case codepoint {
     cp if cp >= 0x0041 && cp <= 0x005A -> True
