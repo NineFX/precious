@@ -1,6 +1,7 @@
 import gleam/list
 import gleam/regexp.{type Match, Options}
 import gleam/string
+import precious/rle_unicode_tables.{UnicodeRangeLookup}
 
 const halfwidth_chars = "[\\x{FF01}-\\x{FFEF}]"
 

@@ -1,9 +1,11 @@
 import gleam/bool
+import gleam/int
 import gleam/list
 import gleam/option.{Some}
 import gleam/regexp.{type Match, Options}
 import gleam/string
 import gleam/string_tree.{type StringTree}
+import rle_unicode_tables
 import simplifile
 
 const unicode_path = "./dev/unicode_spec/Unicode 16.0.0/"
@@ -110,8 +112,6 @@ fn generate_unicode(
     generate_in_category_function(category.0, category.1, category.2)
   })
   |> string.join("\n")
-  //|> string.append("\n")
-  //|> string.append(generate_simple_lowercase_function())
   |> simplifile.append(to: filename, contents: _)
 }
 
@@ -120,36 +120,38 @@ fn generate_in_category_function(
   file: String,
   value: String,
 ) {
-  let path = unicode_path <> file
-  let assert Ok(file_contents) = simplifile.read(path)
-  let pattern = "^([0-9A-F]+(\\.\\.[0-9A-F]+)?)\\s+;\\s" <> value <> "\\s"
-  let assert Ok(regex) =
-    regexp.compile(pattern, Options(case_insensitive: False, multi_line: True))
-  let case_clauses =
-    regex
-    |> regexp.scan(file_contents)
-    |> list.map(fn(match: Match) {
-      case match.submatches {
-        [Some(range), ..] -> unicode_range_to_guard(range) <> " -> True"
-        _ -> panic as "no regex submatches"
-      }
-    })
+  let assert Ok(table) = generate_bit_array_table(file, value)
 
   "pub fn in_"
   <> category_name
   <> "(codepoint: Int) -> Bool {\n"
-  <> "  case codepoint {\n"
-  <> string.join(case_clauses, with: "\n")
-  <> "\n    _ -> False\n"
-  <> "  }\n"
+  <> "  rle_unicode_tables.contains("
+  <> category_name
+  <> "_table, codepoint)\n"
   <> "}\n"
+  <> "const "
+  <> category_name
+  <> "_table = UnicodeRangeLookup("
+  <> string.inspect(table.rle_data)
+  <> ", "
+  <> string.inspect(table.min_codepoint)
+  <> ", "
+  <> string.inspect(table.max_codepoint)
+  <> ")\n"
 }
 
-fn unicode_range_to_guard(unicode_range: String) -> String {
+fn unicode_range_to_tuple(unicode_range: String) -> #(Int, Int) {
   let split = string.split(unicode_range, on: "..")
   case split {
-    [actual] -> "    cp if cp == 0x" <> actual
-    [start, end] -> "    cp if cp >= 0x" <> start <> " && cp <= 0x" <> end
+    [actual] -> {
+      let assert Ok(actual_int) = int.base_parse(actual, 16)
+      #(actual_int, actual_int)
+    }
+    [start, end] -> {
+      let assert Ok(start_int) = int.base_parse(start, 16)
+      let assert Ok(end_int) = int.base_parse(end, 16)
+      #(start_int, end_int)
+    }
     _ -> panic as "a range list must have 1 or 2 elements"
   }
 }
@@ -264,6 +266,28 @@ fn string_to_derived_category(str: String) -> String {
     "UNASSIGNED" -> "Unassigned"
     _ -> panic as "unknown derived category"
   }
+}
+
+fn generate_bit_array_table(file: String, value: String) {
+  let path = unicode_path <> file
+  let assert Ok(file_contents) = simplifile.read(path)
+  let pattern = "^([0-9A-F]+(\\.\\.[0-9A-F]+)?)\\s+;\\s" <> value <> "\\s"
+  let assert Ok(regex) =
+    regexp.compile(pattern, Options(case_insensitive: False, multi_line: True))
+
+  regex
+  |> regexp.scan(file_contents)
+  |> list.fold(
+    over: _,
+    from: [],
+    with: fn(acc: List(#(Int, Int)), match: Match) {
+      case match.submatches {
+        [Some(range), ..] -> [unicode_range_to_tuple(range), ..acc]
+        _ -> panic as "no regex submatches"
+      }
+    },
+  )
+  |> rle_unicode_tables.from_ranges
 }
 // fn generate_simple_lowercase_function() -> String {
 //   let assert Ok(unicode_data) = simplifile.read(unicode_data_table)
