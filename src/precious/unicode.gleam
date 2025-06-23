@@ -42,6 +42,7 @@ pub fn nfkc(s: String) -> String
 @external(erlang, "unicode", "characters_to_nfc_binary")
 @external(javascript, "../precious_ffi.mjs", "nfc")
 pub fn nfc(s: String) -> String
+
 pub fn in_left_to_right_first(codepoint: Int) -> Bool {
   case codepoint {
     cp if cp >= 0x0041 && cp <= 0x005A -> True

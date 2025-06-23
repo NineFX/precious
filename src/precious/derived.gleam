@@ -1,37 +1,36 @@
+pub type Category {
+  PValid(PValidReason)
+  ContextO
+  ContextJ
+  Disallowed(DisallowedReason)
+  Unassigned
+  FreePVal(FreePValReason)
+}
 
-    pub type Category {
-      PValid(PValidReason)
-      ContextO
-      ContextJ
-      Disallowed(DisallowedReason)
-      Unassigned
-      FreePVal(FreePValReason)
-    }
+pub type PValidReason {
+  Ascii7
+  LetterDigits
+  PValidExceptions
+}
 
-    pub type PValidReason {
-      Ascii7
-      LetterDigits
-      PValidExceptions
-    }
+pub type DisallowedReason {
+  PrecisIgnorableProperties
+  Controls
+  Other
+  OldHangulJamo
+  DisallowedExceptions
+}
 
-    pub type DisallowedReason {
-      PrecisIgnorableProperties
-      Controls
-      Other
-      OldHangulJamo
-      DisallowedExceptions
-    }
-
-    pub type FreePValReason {
-      HasCompat
-      OtherLetterDigits
-      Spaces
-      Symbols
-      Punctuation
+pub type FreePValReason {
+  HasCompat
+  OtherLetterDigits
+  Spaces
+  Symbols
+  Punctuation
 }
 
 pub fn derived_property(codepoint: Int) -> Category {
-   case codepoint {
+  case codepoint {
     cp if cp >= 0x0000 && cp <= 0x001F -> Disallowed(Controls)
     cp if cp <= 0x0020 -> FreePVal(Spaces)
     cp if cp <= 0x007E -> PValid(Ascii7)
