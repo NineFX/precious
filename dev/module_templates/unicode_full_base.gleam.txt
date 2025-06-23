@@ -1,0 +1,64 @@
+import gleam/list
+import gleam/regexp.{type Match, Options}
+import gleam/string
+
+const halfwidth_chars = "[\\x{FF01}-\\x{FFEF}]"
+
+const space_chars = "[\\x{00A0}\\x{1680}\\x{2000}-\\x{200A}\\x{202F}\\x{205F}\\x{3000}]"
+
+pub fn width_map(s: String) -> String {
+  let assert Ok(pattern) =
+    regexp.compile(halfwidth_chars, with: Options(False, True))
+  regexp.match_map(each: pattern, in: s, with: decompose)
+}
+
+pub fn map_nonascii_space_to_ascii(s: String) -> String {
+  let assert Ok(pattern) =
+    regexp.compile(space_chars, with: Options(False, True))
+  regexp.replace(each: pattern, in: s, with: " ")
+}
+
+pub fn in_halfwidth_cp(codepoint: Int) -> Bool {
+  case codepoint {
+    cp if cp >= 0xFF01 && cp <= 0xFFEF -> True
+    _ -> False
+  }
+}
+
+pub fn in_space_char(codepoint: Int) -> Bool {
+  case codepoint {
+    0x00A0 | 0x1680 | 0x202F | 0x205F | 0x3000 -> True
+    cp if cp >= 0x2000 && cp <= 0x200A -> True
+    _ -> False
+  }
+}
+
+fn decompose(match: Match) -> String {
+  let normalized = nfkc(match.content)
+  let normalized_lenth = list.length(string.to_utf_codepoints(normalized))
+  case normalized_lenth {
+    1 -> normalized
+    _ -> match.content
+  }
+}
+
+pub fn in_arabic_indic(codepoint: Int) -> Bool {
+  0x0660 <= codepoint && codepoint <= 0x0669
+}
+
+pub fn in_ascii7(codepoint: Int) -> Bool {
+  0x21 <= codepoint && codepoint <= 0x7E
+}
+
+// Code points for Join Control characters required under some circumstances. (CONTEXTJ)
+pub fn in_join_control(codepoint: Int) -> Bool {
+  0x200C <= codepoint && codepoint <= 0x200D
+}
+
+pub fn in_extended_arabic_indic(codepoint: Int) -> Bool {
+  0x06F0 <= codepoint && codepoint <= 0x06F9
+}
+
+@external(erlang, "unicode", "characters_to_nfkc_binary")
+@external(javascript, "../precious_ffi.mjs", "nkfcnfkc")
+pub fn nfkc(s: String) -> String
