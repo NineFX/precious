@@ -33,6 +33,16 @@ pub fn nickname() -> Profile {
   profile.nickname()
 }
 
+/// PRECIS OpaqueString Profile, RFC 7613
+/// The OpaqueString profile is designed for use with diverse character
+/// strings that are used in network and application protocols. The
+/// profile is intended to be broadly applicable for password-like
+/// secrets and other opaque strings (such as URIs or directory strings)
+/// that are not intended to be presented to users.
+pub fn opaque_string() -> Profile {
+  profile.opaque_string()
+}
+
 /// Enforcement entails applying all of the rules specified for a
 /// particular string class, or profile thereof, to a single input
 /// string, for the purpose of checking whether the string conforms to
