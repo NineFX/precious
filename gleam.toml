@@ -4,7 +4,7 @@ version = "1.0.0"
 
 description = "An implementation of the PRECIS framework for preparation, enforcement, and comparison of internationalized strings."
 licences = ["MIT"]
-repository = { type = "github", user = "https://github.com/NineFX", repo = "precious" }
+repository = { type = "github", user = "NineFX", repo = "precious" }
 
 # Supports the `dev` folder
 gleam = ">= 1.11.0"
